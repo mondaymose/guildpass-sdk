@@ -5,6 +5,7 @@ Comprehensive reference documentation for the GuildPass TypeScript SDK V2.
 ---
 
 ## Table of Contents
+
 - [Installation](#installation)
 - [Client Initialization](#client-initialization)
   - [Configuration Options](#configuration-options)
@@ -13,6 +14,14 @@ Comprehensive reference documentation for the GuildPass TypeScript SDK V2.
 - [Access Resource](#access-resource)
   - [client.access.check](#clientaccesscheck)
   - [Access Decision Types](#access-decision-types)
+- [Guilds Resource](#guilds-resource)
+  - [client.guilds.get](#clientguildsget)
+  - [client.guilds.list](#clientguildslist)
+  - [client.guilds.create](#clientguildscreate)
+  - [client.guilds.update](#clientguildsupdate)
+  - [client.guilds.delete](#clientguildsdelete)
+  - [client.guilds.paginate](#clientguildspaginate)
+  - [Guild Types](#guild-types)
 - [Pagination Helpers](#pagination-helpers)
   - [paginate](#paginate)
   - [collectAll](#collectall)
@@ -28,24 +37,24 @@ Comprehensive reference documentation for the GuildPass TypeScript SDK V2.
 ## Installation
 
 ```bash
-pnpm add @guildpass/sdk
+pnpm add @lumenpass/sdk
 # or npm
-npm install @guildpass/sdk
+npm install @lumenpass/sdk
 # or yarn
-yarn add @guildpass/sdk
+yarn add @lumenpass/sdk
 ```
 
 ---
 
 ## Client Initialization
 
-The primary entry point is `GuildPassClient`.
+The primary entry point is `LumenPassClient` (also exported as `GuildPassClient` for backwards compatibility).
 
 ```ts
-import { GuildPassClient } from "@guildpass/sdk";
+import { LumenPassClient } from "@lumenpass/sdk";
 
 // Initialize with a base URL
-const client = new GuildPassClient({
+const client = new LumenPassClient({
   baseUrl: "https://api.testnet.guildpass.io",
   timeoutMs: 10_000,
   headers: {
@@ -56,11 +65,11 @@ const client = new GuildPassClient({
 
 ### Configuration Options
 
-| Option | Type | Default | Description |
-|---|---|---|---|
-| `baseUrl` | `string` | **Required** | The GuildPass Core API URL (must be `http:` or `https:`, no credentials). |
-| `timeoutMs` | `number` | `10000` | Request timeout in milliseconds (between `100` and `60000`). |
-| `headers` | `Record<string, string>` | `{}` | Custom HTTP headers sent with every request (keys normalized to lowercase). |
+| Option      | Type                     | Default      | Description                                                                 |
+| ----------- | ------------------------ | ------------ | --------------------------------------------------------------------------- |
+| `baseUrl`   | `string`                 | **Required** | The GuildPass Core API URL (must be `http:` or `https:`, no credentials).   |
+| `timeoutMs` | `number`                 | `10000`      | Request timeout in milliseconds (between `100` and `60000`).                |
+| `headers`   | `Record<string, string>` | `{}`         | Custom HTTP headers sent with every request (keys normalized to lowercase). |
 
 ---
 
@@ -75,7 +84,7 @@ import {
   parseStellarAccountId,
   isStellarAccountId,
   safeParseStellarAccountId,
-} from "@guildpass/sdk";
+} from "@lumenpass/sdk";
 
 const account = "GAAZI4TCR3TY5OJHCTJC2A4QSY6CJWJH5IAJTGKIN2ER7LBNVKOCCWN7";
 
@@ -105,7 +114,7 @@ if (result.success) {
 Evaluates whether a Stellar account is authorized to perform an action or access a resource within a guild. Policy evaluation is delegated solely to GuildPass Core.
 
 ```ts
-import { GuildPassClient, type AccessDecision } from "@guildpass/sdk";
+import { GuildPassClient, type AccessDecision } from "@lumenpass/sdk";
 
 const client = new GuildPassClient({
   baseUrl: "https://api.testnet.guildpass.io",
@@ -154,6 +163,115 @@ export interface AccessDecision {
 
 ---
 
+## Guilds Resource
+
+The Guilds resource provides methods for managing programmable communities and guilds via `client.guilds`.
+
+### `client.guilds.get`
+
+Retrieves a single guild by its ID.
+
+```ts
+const guild = await client.guilds.get("guild_alpha_123");
+console.log(`Guild: ${guild.name} (owner: ${guild.ownerAccount})`);
+```
+
+### `client.guilds.list`
+
+Queries guilds with cursor pagination and optional filtering by owner account and network.
+
+```ts
+const page = await client.guilds.list({
+  limit: 20,
+  network: "testnet",
+  ownerAccount: "GAAZI4TCR3TY5OJHCTJC2A4QSY6CJWJH5IAJTGKIN2ER7LBNVKOCCWN7",
+});
+
+for (const guild of page.items) {
+  console.log(`- ${guild.name} (${guild.id})`);
+}
+```
+
+### `client.guilds.create`
+
+Creates a new guild with validated owner Stellar account.
+
+```ts
+const newGuild = await client.guilds.create({
+  name: "Soroban Artisans",
+  description: "Community of Soroban smart contract builders",
+  ownerAccount: "GAAZI4TCR3TY5OJHCTJC2A4QSY6CJWJH5IAJTGKIN2ER7LBNVKOCCWN7",
+  network: "testnet",
+  metadata: { forum: "https://community.guildpass.io" },
+});
+```
+
+### `client.guilds.update`
+
+Updates attributes or metadata on an existing guild.
+
+```ts
+const updated = await client.guilds.update("guild_alpha_123", {
+  description: "Updated community mission and links",
+  metadata: { active: true },
+});
+```
+
+### `client.guilds.delete`
+
+Deletes a guild by identifier.
+
+```ts
+const result = await client.guilds.delete("guild_alpha_123");
+console.log("Deleted:", result.deleted);
+```
+
+### `client.guilds.paginate`
+
+Automatically iterates across all paginated pages using an async iterator.
+
+```ts
+for await (const guild of client.guilds.paginate({ limit: 50 }, { maxPages: 10 })) {
+  console.log(`Guild: ${guild.name}`);
+}
+```
+
+### Guild Types
+
+```ts
+export interface CreateGuildParams {
+  name: string;
+  ownerAccount: string;
+  description?: string;
+  contractId?: string;
+  network?: Network;
+  metadata?: Record<string, unknown>;
+}
+
+export interface UpdateGuildParams {
+  name?: string;
+  description?: string;
+  ownerAccount?: string;
+  contractId?: string;
+  network?: Network;
+  metadata?: Record<string, unknown>;
+}
+
+export interface ListGuildsParams {
+  limit?: number;
+  cursor?: string;
+  ownerAccount?: string;
+  network?: Network;
+}
+
+export interface DeleteGuildResult {
+  id: string;
+  deleted: boolean;
+}
+```
+
+---
+
 ## Pagination Helpers
 
 GuildPass provides standard cursor-based pagination utilities.
@@ -163,7 +281,7 @@ GuildPass provides standard cursor-based pagination utilities.
 Asynchronously iterates over items across multiple pages:
 
 ```ts
-import { paginate, type Page, type PageRequest } from "@guildpass/sdk";
+import { paginate, type Page, type PageRequest } from "@lumenpass/sdk";
 
 interface Member {
   id: string;
@@ -189,7 +307,7 @@ for await (const member of paginate(fetchMembersPage, { maxPages: 5 })) {
 Fetches all items across pages into a single array:
 
 ```ts
-import { collectAll } from "@guildpass/sdk";
+import { collectAll } from "@lumenpass/sdk";
 
 const allMembers = await collectAll(fetchMembersPage, { maxPages: 10 });
 console.log("Total fetched:", allMembers.length);
@@ -226,7 +344,7 @@ import {
   NetworkError,
   TimeoutError,
   ConfigError,
-} from "@guildpass/sdk";
+} from "@lumenpass/sdk";
 
 try {
   const client = new GuildPassClient({
@@ -260,10 +378,10 @@ try {
 GuildPass SDK provides built-in utilities to sanitize secrets and generate diagnostic fingerprints:
 
 ```ts
-import { redactSecret, fingerprintSecret, REDACTED_DISPLAY_VALUE } from "@guildpass/sdk";
+import { redactSecret, fingerprintSecret, REDACTED_DISPLAY_VALUE } from "@lumenpass/sdk";
 
 const result = redactSecret("my-super-secret-api-key", { namespace: "api-key" });
-console.log(result.display);     // "[REDACTED]"
+console.log(result.display); // "[REDACTED]"
 console.log(result.fingerprint); // 16-character deterministic hex fingerprint
-console.log(result.namespace);   // "api-key"
+console.log(result.namespace); // "api-key"
 ```

@@ -1,33 +1,20 @@
 {
-  "name": "@guildpass/sdk",
+  "name": "lumenpass-sdk",
   "version": "0.2.0",
-  "description": "Official TypeScript SDK for interacting with GuildPass.",
+  "description": "Official TypeScript SDK for LumenPass — Stellar-first programmable community and access control platform.",
+  "private": true,
   "type": "module",
-  "main": "./dist/index.js",
-  "module": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
-    }
-  },
-  "files": [
-    "dist",
-    "README.md",
-    "LICENSE"
-  ],
   "scripts": {
-    "dev": "tsup --watch",
-    "build": "tsup",
+    "dev": "pnpm -r --parallel dev",
+    "build": "pnpm --filter @lumenpass/core build && pnpm --filter @lumenpass/sdk build",
     "test": "vitest run",
     "test:watch": "vitest",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "pnpm -r run typecheck",
     "lint": "eslint .",
     "format": "prettier --write ."
   },
   "keywords": [
-    "guildpass",
+    "lumenpass",
     "stellar",
     "soroban",
     "membership",
@@ -35,7 +22,7 @@
     "sdk",
     "typescript"
   ],
-  "author": "GuildPass",
+  "author": "LumenPass",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -49,8 +36,6 @@
     "node": ">=24"
   },
   "packageManager": "pnpm@11.16.0",
-  "sideEffects": false,
-  "dependencies": {},
   "devDependencies": {
     "@types/node": "^24.0.0",
     "eslint": "^9.0.0",

@@ -1,20 +1,21 @@
 import {
-  GuildPassClient,
+  LumenPassClient,
   isStellarAccountId,
   parseStellarAccountId,
   paginate,
-  isGuildPassError,
+  isLumenPassError,
   HttpError,
   type Page,
   type PageRequest,
   type AccessDecision,
-} from "../src/index.js";
+  type Guild,
+} from "../packages/sdk/src/index.js";
 
 async function main() {
-  console.log("=== GuildPass SDK V2 Quickstart Example ===");
+  console.log("=== LumenPass SDK V2 Quickstart Example ===");
 
   // 1. Initialize Client
-  const client = new GuildPassClient({
+  const client = new LumenPassClient({
     baseUrl: "https://api.testnet.guildpass.io",
     timeoutMs: 10000,
     headers: {
@@ -46,14 +47,25 @@ async function main() {
   } catch (error: unknown) {
     if (error instanceof HttpError) {
       console.log(`Received API response with HTTP status: ${error.status}`);
-    } else if (isGuildPassError(error)) {
-      console.log(`GuildPass Error [${error.code}]: ${error.message}`);
+    } else if (isLumenPassError(error)) {
+      console.log(`LumenPass Error [${error.code}]: ${error.message}`);
     } else {
       console.log("Standard exception caught as expected in mock environment");
     }
   }
 
-  // 4. Working with Pagination Helpers
+  // 4. Manage Guilds via client.guilds
+  try {
+    console.log("Listing guilds via client.guilds.list():");
+    const guildsPage: Page<Guild> = await client.guilds.list({ limit: 5 });
+    console.log(`Retrieved ${guildsPage.items.length} guilds on current page.`);
+  } catch (error: unknown) {
+    if (error instanceof HttpError) {
+      console.log(`Guilds API error HTTP ${error.status}: ${error.message}`);
+    }
+  }
+
+  // 5. Working with Pagination Helpers
   interface SampleMember {
     id: string;
     role: string;

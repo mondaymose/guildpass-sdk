@@ -23,9 +23,7 @@ interface Schema<T> {
 Validation returns a discriminated union:
 
 ```typescript
-type ValidationResult<T> =
-  | { success: true; data: T }
-  | { success: false; error: ValidationError };
+type ValidationResult<T> = { success: true; data: T } | { success: false; error: ValidationError };
 ```
 
 ### Error Reporting
@@ -64,9 +62,9 @@ The `object` schema supports configurable unknown key handling:
 
 ```typescript
 enum UnknownKeyHandling {
-  STRIP = "strip",      // Remove unknown keys (default)
-  REJECT = "reject",    // Fail validation if unknown keys present
-  PRESERVE = "preserve" // Keep unknown keys in result
+  STRIP = "strip", // Remove unknown keys (default)
+  REJECT = "reject", // Fail validation if unknown keys present
+  PRESERVE = "preserve", // Keep unknown keys in result
 }
 ```
 
@@ -75,7 +73,7 @@ enum UnknownKeyHandling {
 ### Basic Validation
 
 ```typescript
-import { string, number, object } from '@guildpass/sdk';
+import { string, number, object } from "@lumenpass/sdk";
 
 const userSchema = object({
   name: string(),
@@ -86,7 +84,7 @@ const result = userSchema.parse({ name: "John", age: 30 });
 if (result.success) {
   console.log(result.data.name); // TypeScript knows this is a string
 } else {
-  console.error(`Validation failed at ${result.error.path.join('.')}: ${result.error.message}`);
+  console.error(`Validation failed at ${result.error.path.join(".")}: ${result.error.message}`);
 }
 ```
 
@@ -94,22 +92,20 @@ if (result.success) {
 
 ```typescript
 const responseSchema = object({
-  users: array(object({
-    id: string(),
-    name: string(),
-    age: optional(number()),
-  })),
+  users: array(
+    object({
+      id: string(),
+      name: string(),
+      age: optional(number()),
+    }),
+  ),
 });
 ```
 
 ### Union Types
 
 ```typescript
-const statusSchema = union(
-  literal("active"),
-  literal("inactive"),
-  literal("pending")
-);
+const statusSchema = union(literal("active"), literal("inactive"), literal("pending"));
 ```
 
 ### Dictionary Validation
@@ -122,12 +118,9 @@ const result = metadataSchema.parse({ key1: "value1", key2: "value2" });
 ### Strict Object Validation
 
 ```typescript
-import { UnknownKeyHandling } from '@guildpass/sdk';
+import { UnknownKeyHandling } from "@lumenpass/sdk";
 
-const strictSchema = object(
-  { name: string() },
-  { unknownKeys: UnknownKeyHandling.REJECT }
-);
+const strictSchema = object({ name: string() }, { unknownKeys: UnknownKeyHandling.REJECT });
 ```
 
 ## Security Features
@@ -137,7 +130,7 @@ const strictSchema = object(
 All validation is bounded by `MAX_DEPTH` (20 levels) to prevent DoS attacks via deeply nested or circular data:
 
 ```typescript
-import { MAX_DEPTH } from '@guildpass/sdk';
+import { MAX_DEPTH } from "@lumenpass/sdk";
 ```
 
 ### Type Safety
@@ -161,13 +154,13 @@ The validation system does not execute arbitrary code from input data. It only p
 The validation system integrates seamlessly with the HTTP transport layer:
 
 ```typescript
-import { HttpTransport } from '@guildpass/sdk';
-import { object, string } from '@guildpass/sdk';
+import { HttpTransport } from "@lumenpass/sdk";
+import { object, string } from "@lumenpass/sdk";
 
-const transport = new HttpTransport({ baseUrl: 'https://api.example.com' });
+const transport = new HttpTransport({ baseUrl: "https://api.example.com" });
 const userSchema = object({ name: string() });
 
-const response = await transport.request({ method: 'GET', path: '/user' });
+const response = await transport.request({ method: "GET", path: "/user" });
 const validated = userSchema.parse(response);
 ```
 
@@ -185,12 +178,13 @@ Validation errors provide structured information:
 ```typescript
 if (!result.success) {
   const { message, path } = result.error;
-  const pathString = path.length > 0 ? path.join('.') : 'root';
+  const pathString = path.length > 0 ? path.join(".") : "root";
   console.error(`Validation failed at ${pathString}: ${message}`);
 }
 ```
 
 Path format uses dot notation for objects and bracket notation for arrays:
+
 - `user.name` - nested object field
 - `users[2].id` - array element with nested field
 - `[0]` - root array element
